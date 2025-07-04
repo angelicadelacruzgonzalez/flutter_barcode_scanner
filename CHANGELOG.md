@@ -1,9 +1,12 @@
-## 2.0.0
 
-* Android: Fixes #137 and #132
+
+
+## 2.1.1
+
+* Android: version 
 * iOS: Fixes #97
 * PR: #184 and #182
-* Null safety migration
+
 
 ## 1.0.1
 
