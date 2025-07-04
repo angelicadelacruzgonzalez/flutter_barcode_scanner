@@ -1,4 +1,4 @@
-package com.angie.flutter_barcod_escanner
+package com.angie.flutter_barcode_scanner_update
 
 import androidx.annotation.NonNull
 

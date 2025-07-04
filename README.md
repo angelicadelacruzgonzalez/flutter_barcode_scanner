@@ -1,4 +1,4 @@
-# flutter_barcode_scanner
+# flutter_barcode_scanner_update
 
 🎯 Versión personalizada y actualizada del plugin [flutter_barcode_scanner](https://github.com/AmolGangadhare/flutter_barcode_scanner) con soporte para escaneo de códigos QR y de barras tanto en **Android** como en **iOS**.
 
@@ -11,7 +11,7 @@
 Agrega este plugin directamente desde Git:
 
 ```yaml
-flutter_barcode_scanner:
+flutter_barcode_scanner_update:
   git:
     url: https://github.com/angelicadelacruzgonzalez/flutter_barcode_scanner.git
 # flutter_barcode_scanner

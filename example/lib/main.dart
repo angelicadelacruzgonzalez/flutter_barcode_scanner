@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner_update.dart';
+import 'package:flutter_barcode_scanner_update/flutter_barcode_scanner_update.dart';
 
 void main() => runApp(MyApp());
 

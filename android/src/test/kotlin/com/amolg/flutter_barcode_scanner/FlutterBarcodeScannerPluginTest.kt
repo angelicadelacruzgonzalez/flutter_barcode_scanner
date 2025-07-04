@@ -1,4 +1,4 @@
-package com.angie.flutterbarcodescanner
+package com.angie.flutterbarcodescannerupdate
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
