@@ -1,4 +1,4 @@
-group 'com.angie.flutterbarcodescannerupdate'
+group'com.angie.flutterbarcodescannerupdate'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -21,10 +21,10 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'com.angie.flutterbarcodescannerupdate'
-    compileSdkVersion 30
+    compileSdkVersion 35
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion 35
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
