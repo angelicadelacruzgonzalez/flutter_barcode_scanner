@@ -40,7 +40,7 @@ No requiere configuración adicional.
 
 ---
 
-### 🍎 iOS (mínimo iOS 12)
+### 🍎 iOS (mínimo iOS 13)
 
 #### 🔹 Si tu proyecto ya usa Swift:
 
@@ -54,7 +54,7 @@ No requiere configuración adicional.
 
 1. Crea un nuevo proyecto Flutter con **soporte Swift**
 2. Copia el directorio `/ios` desde el nuevo proyecto al tuyo
-3. Sigue los pasos anteriores para configurar iOS 12 y Swift 5
+3. Sigue los pasos anteriores para configurar iOS 13 y Swift 5
 
 #### 📷 Permiso de cámara
 

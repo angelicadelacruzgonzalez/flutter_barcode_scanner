@@ -1,3 +1,7 @@
+## 2.1.4
+* SDK changes and updated features compatible with Flutter 3.35.5
+
+
 ## 2.1.3
 * Change SDK version
 

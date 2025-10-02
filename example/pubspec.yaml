@@ -21,7 +21,7 @@ dev_dependencies:
 
 
   pedantic: ^1.10.0-nullsafety.3
-  change_app_package_name: ^1.5.0
+
 
 flutter:
   uses-material-design: true
