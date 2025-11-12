@@ -1,3 +1,18 @@
+## 2.1.5
+* Novedades y mejoras
+
+Se mejoró la gestión del flujo de escaneo para evitar errores cuando el usuario cancela el proceso.
+
+Ahora, al cancelar manualmente el escaneo, el método scanBarcode() devuelve de forma controlada un valor '-1' o una cadena vacía (''), evitando la excepción PlatformException(CANCELLED, User cancelled scan, null, null).
+
+Se añadieron validaciones adicionales y manejo seguro de errores para una mejor estabilidad.
+
+Limpieza general del código y optimización menor en la comunicación con el canal nativo.
+ Compatibilidad
+
+Compatible con versiones anteriores.
+
+No se requieren cambios en la implementación existente, aunque se recomienda actualizar para mejorar la estabilidad.
 ## 2.1.4
 * SDK changes and updated features compatible with Flutter 3.35.5
 
