@@ -1,3 +1,8 @@
+## 2.1.6 
+- Fixed first scan not detecting barcode
+- Improved CameraX initialization timing
+- Better stability on Android devices
+
 ## 2.1.5
 * Novedades y mejoras
 
