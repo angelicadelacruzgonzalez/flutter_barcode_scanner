@@ -1,3 +1,6 @@
+## 2.1.7
+- Update of targetSdkVersion
+
 ## 2.1.6 
 - Fixed first scan not detecting barcode
 - Improved CameraX initialization timing
