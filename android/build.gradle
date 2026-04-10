@@ -23,7 +23,7 @@ apply plugin: "kotlin-android"
 //apply plugin: "dev.flutter.flutter-gradle-plugin"
 
 // Información del plugin
-group 'com.angie.flutter_bluetooth_serial_plus_plus'
+group 'com.angie.flutter_barcode_scanning_plus'
 version '1.0.0'
 
 // Repositorios para dependencias
@@ -33,7 +33,7 @@ repositories {
 }
 
 android {
-    namespace 'com.angie.flutterbluetoothserialplus'
+    namespace 'com.angie.flutter_barcode_scanning_plus'
     compileSdkVersion 35
     buildToolsVersion '30.0.3'
    kotlinOptions {

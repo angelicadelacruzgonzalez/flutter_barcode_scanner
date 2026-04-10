@@ -9,8 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.1+1
-  flutter_plugin_android_lifecycle: ^2.0.0-nullsafety
+  cupertino_icons: ^1.0.9
+  flutter_plugin_android_lifecycle: ^2.0.34
   flutter_barcode_scanner_update:
     path: ../
   path_provider: ^2.1.5
@@ -21,7 +21,7 @@ dev_dependencies:
 
 
 
-  pedantic: ^1.10.0-nullsafety.3
+  pedantic: ^1.11.1
 
 
 flutter:

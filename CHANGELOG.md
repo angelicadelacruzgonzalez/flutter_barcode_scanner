@@ -1,3 +1,6 @@
+## 2.1.8
+- Update ndkVersion for 28.2.13676358
+
 ## 2.1.7
 - Update of targetSdkVersion
 
