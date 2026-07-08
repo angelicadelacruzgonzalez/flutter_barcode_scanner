@@ -21,7 +21,8 @@ dev_dependencies:
 
 
 
-  pedantic: ^1.11.1
+  ##pedantic: ^1.11.1
+  lints: ^6.1.0
 
 
 flutter:

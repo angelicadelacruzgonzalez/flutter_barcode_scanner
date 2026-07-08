@@ -1,3 +1,14 @@
+
+## 2.1.9 - 2026-07-07
+
+Migración a Kotlin integrado (built-in Kotlin) de Flutter, compatible con AGP 9+.
+
+* Se elimina `apply plugin: "kotlin-android"` y se reemplaza `kotlinOptions` por `kotlin { compilerOptions { ... } }`.
+* Se elimina `buildToolsVersion` obsoleto.
+* Se actualiza `compileOptions` de Java 8 a Java 11.
+* Se fija `compileSdk` en 36.
+* `lintOptions` → `lint` (sintaxis moderna de AGP).
+* Se elimina dependencia duplicada de `com.google.mlkit:barcode-scanning`.
 ## 2.1.8
 - Update ndkVersion for 28.2.13676358
 

@@ -61,7 +61,7 @@ private void startCamera() {
 
             BarcodeScanner scanner = BarcodeScanning.getClient();
 
-            // 🔥 Ignorar primeros frames (SIN dependencias nuevas)
+           
             final int[] frameCount = {0};
 
             imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), image -> {
@@ -89,7 +89,7 @@ private void startCamera() {
 
             cameraProvider.unbindAll();
 
-            // 🔥 FIX CLAVE: esperar a que el preview esté listo
+           
             previewView.post(() -> {
 
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
