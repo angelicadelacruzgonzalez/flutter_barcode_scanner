@@ -1,19 +1,11 @@
-// Configuración de Gradle para un plugin Flutter
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10"
-    }
+plugins {
+    id "com.android.library"
 }
-
-apply plugin: "com.android.library"
 
 group 'com.angie.flutter_barcode_scanning_plus'
 version '1.0.0'
+
+
 
 repositories {
     google()
@@ -22,12 +14,12 @@ repositories {
 
 android {
     namespace 'com.angie.flutter_barcode_scanning_plus'
+
     compileSdk 36
-    // buildToolsVersion eliminado: se usa el default de AGP
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 36
+        minSdk 19
+        targetSdk 36
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
