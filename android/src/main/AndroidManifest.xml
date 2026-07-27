@@ -12,9 +12,7 @@
         
      <activity android:name="com.angie.flutterbarcodescannerupdate.MLKitBarcodeActivity"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        android:exported="false"/><meta-data
-    android:name="io.flutter.embedding.android.EnableImpeller"
-    android:value="false" />
+        android:exported="false"/>
 
     </application>
 </manifest>

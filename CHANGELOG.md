@@ -1,3 +1,46 @@
+## 2.2.1 - 2026-07-27
+
+### 🛠 Corregido (Fixed)
+
+- **Compatibilidad con páginas de memoria de 16 KB (requisito de Google Play).**
+  Se actualizaron las dependencias nativas de CameraX y ML Kit que empaquetaban
+  `libimage_processing_util_jni.so` con alineación de 4 KB, lo cual generaba el
+  error de validación de Google Play:
+  > `libimage_processing_util_jni.so - 4KB load section alignment, but 16 KB is required`
+
+  Cambios realizados:
+  - `androidx.camera:camera-core` actualizado a `1.4.1`
+  - `androidx.camera:camera-camera2` actualizado a `1.4.1`
+  - `androidx.camera:camera-lifecycle` actualizado a `1.4.1`
+  - `androidx.camera:camera-view` actualizado a `1.4.1`
+  - `com.google.mlkit:barcode-scanning` actualizado a `17.3.0`
+  - `compileSdk` y `targetSdk` subidos a `35`
+  - `packagingOptions.jniLibs.useLegacyPackaging` deshabilitado (`false`) para
+    evitar compresión que rompe la alineación de 16 KB
+
+  Verificado con `check_elf_alignment.sh` / `objdump -p <lib.so> | grep LOAD`
+  → todas las librerías nativas muestran ahora `align 2**14` (16 KB).
+
+- **Retraso en el arranque de la vista previa de cámara (preview binding).**
+  Se detectó que vincular la `Preview` inmediatamente al `SurfaceProvider` podía
+  causar fallos intermitentes de renderizado en algunos dispositivos. Se agregó:
+  - Descarte de los primeros frames del analizador (`frameCount < 5`) para dar
+    tiempo a que la cámara estabilice exposición/enfoque antes de procesar
+    códigos de barras.
+  - Un pequeño retraso (`250 ms`) antes de hacer `bindToLifecycle`, ejecutado
+    después de que la `PreviewView` esté adjunta (`previewView.post`), en vez
+    de usar un `Handler` externo.
+
+### ⚠️ Notas de actualización (Breaking / Migration notes)
+
+- Si tu proyecto fuerza manualmente versiones de CameraX vía
+  `resolutionStrategy`, ya **no es necesario** — el plugin ahora trae las
+  versiones correctas por defecto.
+- Requiere `minSdk 21` o superior (sin cambios respecto a versiones previas).
+- Se recomienda compilar con **AGP 8.5.1+** y **Gradle 8.9+** para que la
+  verificación de alineación de 16 KB se aplique correctamente en el build.
+
+
 ## 2.2.0 - 2026-07-23
 Actualización build
 
