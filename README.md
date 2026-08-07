@@ -1,27 +1,24 @@
 # 📷 flutter_barcode_scanner_update
 
-🎯 Versión personalizada y mejorada del plugin [`flutter_barcode_scanner`](https://github.com/AmolGangadhare/flutter_barcode_scanner) con soporte completo para escaneo de **códigos QR** y **códigos de barras** en **Android** e **iOS**.
+🎯 Versión personalizada y mantenida del plugin [`flutter_barcode_scanner`](https://github.com/AmolGangadhare/flutter_barcode_scanner), con escaneo de **códigos QR** y **códigos de barras** en **Android** e **iOS** sobre ML Kit (CameraX en Android, AVFoundation en iOS).
 
 [![pub version](https://img.shields.io/badge/pub-unpublished-inactive.svg)](https://pub.dev)
 ![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios-blue.svg)
-
-![Demo](https://github.com/AmolGangadhare/MyProfileRepo/blob/master/flutter_barcode_scanning_demo.gif "Demo")
 
 ---
 
 ## 🚀 Características
 
-- Escaneo único (`scanBarcode`) o escaneo continuo (`getBarcodeStreamReceiver`)
-- Personalización de color de línea y texto del botón cancelar
-- Soporte para mostrar/ocultar ícono de flash
-- Gráficos para QR y códigos de barras
-- Compatible con Android e iOS
+- Escaneo único (`scanBarcode`, `scanBarcodeWithOptions`) y continuo (`getBarcodeStreamReceiver`, `getBarcodeStreamWithOptions`)
+- **Filtro de simbologías**: acepta solo los formatos que te interesan
+- **Resultado enriquecido**: valor, valor visible, formato detectado y tipo de contenido
+- Color de línea, texto del botón cancelar y visibilidad del flash configurables
+- Overlay con ventana adaptada al modo (QR o código de barras)
+- Linterna, escaneo en horizontal y cierre controlado del escaneo continuo
 
 ---
 
 ## 🛠️ Instalación
-
-Agrega la dependencia en tu archivo `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -36,29 +33,15 @@ dependencies:
 
 ### ✅ Android
 
-No requiere configuración adicional.
-
----
+No requiere configuración adicional. Requiere `minSdk 21` o superior.
 
 ### 🍎 iOS (mínimo iOS 13)
 
-#### 🔹 Si tu proyecto ya usa Swift:
+1. Abre `ios/Runner.xcworkspace` en Xcode
+2. En _Runner → Build Settings_, deja `iOS Deployment Target` en **13.0** y `Swift Version` en **5.0**
+3. Ejecuta `pod install` dentro de `/ios`
 
-1. Abre el proyecto iOS (`ios/Runner.xcworkspace`) en Xcode
-2. En _Runner → Build Settings_:
-   - Cambia `iOS Deployment Target` a **12.0**
-   - Asegúrate de que `Swift Version` esté en **5.0**
-3. Ejecuta `pod install` dentro del directorio `/ios`
-
-#### 🔹 Si tu proyecto usa Objective-C:
-
-1. Crea un nuevo proyecto Flutter con **soporte Swift**
-2. Copia el directorio `/ios` desde el nuevo proyecto al tuyo
-3. Sigue los pasos anteriores para configurar iOS 13 y Swift 5
-
-#### 📷 Permiso de cámara
-
-Agrega esta línea en `ios/Runner/Info.plist`:
+Agrega el permiso de cámara en `ios/Runner/Info.plist`:
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -67,52 +50,108 @@ Agrega esta línea en `ios/Runner/Info.plist`:
 
 ---
 
-## 🧪 Ejemplo de uso
+## 🧪 Uso
 
-### Escaneo único:
+### Escaneo único (API clásica)
 
 ```dart
 import 'package:flutter_barcode_scanner_update/flutter_barcode_scanner_update.dart';
 
-String barcode = await FlutterBarcodeScannerUpdate.scanBarcode(
-  "#ff6666",         // Color de la línea del escáner
-  "Cancelar",        // Texto del botón cancelar
-  true,              // Mostrar ícono de flash
-  ScanMode.BARCODE   // Modo de escaneo: QR, BARCODE o DEFAULT
+final String barcode = await FlutterBarcodeScanner.scanBarcode(
+  '#3D8BEF',        // Color de la línea del escáner
+  'Cancelar',       // Texto del botón cancelar
+  false,            // Mostrar ícono de flash
+  ScanMode.QR,      // QR, BARCODE o DEFAULT
 );
+```
+
+Devuelve `'-1'` si el usuario cancela.
+
+### Escaneo único con opciones y resultado enriquecido
+
+```dart
+final BarcodeResult? result = await FlutterBarcodeScanner.scanBarcodeWithOptions(
+  const ScannerOptions(
+    lineColor: '#3D8BEF',
+    cancelButtonText: 'Cancelar',
+    isShowFlashIcon: true,
+    scanMode: ScanMode.BARCODE,
+    // Solo simbologías de retail: un QR de marketing en cuadro se ignora
+    formats: [
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.code128,
+      BarcodeFormat.upcA,
+    ],
+  ),
+);
+
+if (result == null) {
+  // El usuario canceló
+} else {
+  print(result.rawValue);       // Contenido crudo
+  print(result.displayValue);   // Contenido legible, si ML Kit lo produce
+  print(result.format?.name);   // ean13, qrCode, ...
+  print(result.valueType.name); // product, url, wifi, text, ...
+}
+```
+
+### Escaneo continuo
+
+```dart
+final subscription = FlutterBarcodeScanner.getBarcodeStreamWithOptions(
+  const ScannerOptions(
+    lineColor: '#3D8BEF',
+    cancelButtonText: 'Cancelar',
+    scanMode: ScanMode.QR,
+    formats: [BarcodeFormat.qrCode],
+  ),
+).listen((barcode) {
+  print('Código escaneado: $barcode');
+});
+
+// La cámara se cierra al cancelar la suscripción
+await subscription.cancel();
+// O explícitamente:
+await FlutterBarcodeScanner.stopBarcodeStream();
 ```
 
 ---
 
-### Escaneo continuo:
+## 📋 Formatos disponibles
 
-```dart
-FlutterBarcodeScannerUpdate.getBarcodeStreamReceiver(
-  "#ff6666", "Cancelar", false, ScanMode.QR
-).listen((barcode) {
-  print('Código escaneado: $barcode');
-});
-```
+`BarcodeFormat.code128`, `code39`, `code93`, `codabar`, `dataMatrix`, `ean13`, `ean8`, `itf`, `qrCode`, `upcA`, `upcE`, `pdf417`, `aztec`.
+
+Una lista vacía en `ScannerOptions.formats` acepta todos los formatos.
 
 ---
 
 ## ℹ️ Notas
 
-- `ScanMode.DEFAULT` mostrará la interfaz de escaneo tipo QR por defecto.
-- Independientemente del `ScanMode`, el plugin detecta **tanto QR como códigos de barras**.
-- Si el usuario cancela el escaneo, el resultado será `"-1"`.
+- `scanMode` solo controla la **forma de la ventana** del overlay. Para restringir qué se detecta usa `formats`.
+- `ScanMode.DEFAULT` muestra la ventana cuadrada, igual que `ScanMode.QR`.
+- Si el usuario cancela: `scanBarcode` devuelve `'-1'` y `scanBarcodeWithOptions` devuelve `null`.
+- Los fallos reales (permiso de cámara denegado, error nativo) lanzan `PlatformException`, para poder distinguirlos de una cancelación:
+
+```dart
+try {
+  final result = await FlutterBarcodeScanner.scanBarcodeWithOptions(options);
+} on PlatformException catch (e) {
+  // e.code: PERMISSION_DENIED | NO_ACTIVITY | ALREADY_RUNNING | NO_ROOT
+}
+```
+
+- En escaneo continuo, un mismo código no se reemite durante ~1,5 s para evitar duplicados por frame.
 
 ---
 
 ## 🤝 Contribuciones
 
-¿Te gustaría colaborar? ¡Tus contribuciones son bienvenidas! Abre un issue o PR para sugerencias, mejoras o correcciones.
+¿Te gustaría colaborar? Abre un issue o PR para sugerencias, mejoras o correcciones.
 
 ---
 
 ## 📬 Contacto
 
-Hecho con ❤️ por [Angélica de la Cruz González](https://github.com/angelicadelacruzgonzalez)  
+Hecho con ❤️ por [Angélica de la Cruz González](https://github.com/angelicadelacruzgonzalez)
 Email: angelicadelacruzgonzalez@gmail.com
-
----

@@ -1,1 +1,9 @@
-include: package:pedantic/analysis_options.yaml
+# pedantic is discontinued and was not even declared as a dependency, so
+# `flutter analyze` failed to resolve it.
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    # The public enum values (QR, BARCODE, DEFAULT) are SCREAMING_CAPS for
+    # backwards compatibility with existing call sites.
+    constant_identifier_names: ignore

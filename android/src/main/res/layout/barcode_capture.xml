@@ -1,67 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/topLayout"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scannerRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black"
     android:keepScreenOn="true">
 
-    <com.angie.flutterbarcodescannerupdate.camera.CameraSourcePreview
-        android:id="@+id/preview"
-        android:layout_above="@+id/layoutBottom"
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent" />
 
-        <com.angie.flutterbarcodescannerupdate.camera.GraphicOverlay
-            android:id="@+id/graphicOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#44000000" />
-
-    </com.angie.flutterbarcodescannerupdate.camera.CameraSourcePreview>
-
-    <RelativeLayout
-        android:id="@+id/layoutBottom"
+    <com.angie.flutterbarcodescannerupdate.ScannerOverlayView
+        android:id="@+id/scannerOverlay"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/black">
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#B3000000"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingLeft="12dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="12dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="12dp">
 
         <ImageView
-            android:id="@+id/imgViewSwitchCamera"
+            android:id="@+id/flashButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentBottom="true"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginLeft="10dp"
-            android:contentDescription="Switch camera"
-            android:src="@drawable/ic_switch_camera"
-            android:layout_alignParentStart="true" />
-
-        <ImageView
-            android:id="@+id/imgViewBarcodeCaptureUseFlash"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerInParent="true"
-            android:contentDescription="Flash button"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/barcode_scanner_toggle_flash"
+            android:padding="12dp"
             android:src="@drawable/ic_barcode_flash_off" />
 
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
         <Button
-            android:id="@+id/btnBarcodeCaptureCancel"
+            android:id="@+id/cancelButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@android:color/transparent"
-            android:text="Cancel"
+            android:background="?android:attr/selectableItemBackground"
+            android:minWidth="88dp"
+            android:text="@string/barcode_scanner_cancel"
             android:textAllCaps="false"
-            android:textColor="@android:color/white" />
-    </RelativeLayout>
-</RelativeLayout>
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </LinearLayout>
+</FrameLayout>

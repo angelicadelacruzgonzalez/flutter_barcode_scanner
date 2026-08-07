@@ -1,18 +1,26 @@
-
-
- <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" />
-    <uses-permission android:name="android.permission.FLASHLIGHT" />
 
-    <application
-        android:largeHeap="true"
-        android:theme="@style/Theme.AppCompat.NoActionBar">
-        
-     <activity android:name="com.angie.flutterbarcodescannerupdate.MLKitBarcodeActivity"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        android:exported="false"/>
+    <!-- Declared as optional so the host application stays installable on
+         devices without a camera. The plugin already checks the permission and
+         reports an error instead of crashing. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
 
+    <!-- No attributes are declared on <application>: a library manifest is
+         merged into the host application and would otherwise override its
+         theme or heap configuration. -->
+    <application>
+        <activity
+            android:name="com.angie.flutterbarcodescannerupdate.MLKitBarcodeActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 </manifest>

@@ -1,3 +1,64 @@
+## 2.3.0
+
+### ✨ Nuevo
+
+- **`scanBarcodeWithOptions(ScannerOptions)`**, con parámetros con nombre y
+  filtro de simbologías. Devuelve `BarcodeResult?` (`null` al cancelar) con
+  `rawValue`, `displayValue`, `format` y `valueType`.
+- **`ScannerOptions.formats`**: restringe qué simbologías se aceptan. Evita
+  leer el código equivocado cuando hay varios en cuadro y acelera la detección.
+  Lista vacía = todos los formatos.
+- **`getBarcodeStreamWithOptions(ScannerOptions)`**, equivalente del escaneo
+  continuo con opciones con nombre.
+- **`stopBarcodeStream()`** para cerrar la cámara del escaneo continuo.
+- **`ScanMode.DEFAULT`**, añadido al final del enum para no alterar los índices
+  de `QR` ni `BARCODE`.
+
+### 🛠 Corregido
+
+- **El escaneo continuo nunca funcionó.** Dart invocaba `scanBarcode` con
+  `isContinuousScan: true`, pero Android decidía por nombre de método y
+  esperaba `startBarcodeStream`; iOS emitía por `MethodChannel.invokeMethod`
+  mientras Dart escuchaba un `EventChannel`. Ahora ambas plataformas publican
+  en `flutter_barcode_scanner_update/stream`.
+- **`lineColor`, `cancelButtonText`, `isShowFlashIcon` y `scanMode` se
+  ignoraban.** Viajaban por el canal pero ninguna plataforma los aplicaba. Se
+  rehízo la UI nativa: overlay con ventana según el modo, línea animada con el
+  color indicado, botón de cancelar con el texto recibido y toggle de linterna.
+- **El manifest de la librería imponía atributos al `<application>` de la app
+  anfitriona** (`android:largeHeap` y `android:theme`), pudiendo sobrescribir su
+  tema. Se eliminaron.
+- **Errores reales se enmascaraban como `'-1'`.** Ahora solo la cancelación
+  devuelve `'-1'`; permiso denegado o fallo nativo lanzan `PlatformException`.
+- Orientación en iOS: los frames y la vista previa se alinean con la interfaz,
+  arreglando el escaneo en horizontal.
+- `AppUtil.dpToPx` usaba `xdpi` en vez de la densidad, devolviendo tamaños
+  desproporcionados.
+- `analysis_options.yaml` incluía `package:pedantic`, que ni siquiera era
+  dependencia, por lo que `flutter analyze` fallaba.
+
+### 🧹 Limpieza
+
+- Eliminados: stub Kotlin del template, test heredado de `com.amolg`,
+  `BarcodeStreamHandler`, `MLKitBarcodeScannerViewController`, bloques
+  comentados extensos y recursos huérfanos.
+- `namespace` y `group` de Gradle alineados con `com.angie.flutterbarcodescannerupdate`
+  (antes era `com.angie.flutter_barcode_scanning_plus`, distinto al paquete
+  declarado en `pubspec.yaml`).
+- `minSdk` subido de 19 a 21, que es lo que ML Kit y CameraX ya exigían.
+- Retirado `android.enableJetifier` y la dependencia no usada
+  `flutter_plugin_android_lifecycle`.
+- El icono de linterna en iOS usa SF Symbols, por lo que ya no se empaquetan
+  PNG.
+
+### ⚠️ Compatibilidad
+
+- `scanBarcode(...)` y `getBarcodeStreamReceiver(...)` conservan su firma y su
+  comportamiento; ahora son envoltorios de la API nueva. No requiere cambios en
+  el código existente.
+- El canal nativo `scanBarcode` responde un `Map` en vez de un `String`. Solo
+  afecta a quien invoque el `MethodChannel` directamente.
+
 ## 2.2.1 - 2026-07-27
 
 ### 🛠 Corregido (Fixed)

@@ -1,6 +1,6 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_barcode_scanner_update (2.1.6):
+  - flutter_barcode_scanner_update (2.3.0):
     - Flutter
     - GoogleMLKit/BarcodeScanning
   - GoogleDataTransport (9.4.1):
@@ -81,7 +81,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_barcode_scanner_update: 76b45067649f920db98becd7cee2186c1f78a408
+  flutter_barcode_scanner_update: 16ab9ff3344343181160eeed5d8ab06c26be243e
   GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
   GoogleMLKit: 97ac7af399057e99182ee8edfa8249e3226a4065
   GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8

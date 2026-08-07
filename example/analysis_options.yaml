@@ -1,1 +1,7 @@
-include: package:flutter_lints/flutter.yaml
+# The example declares `lints`, not `flutter_lints`, so the previous include
+# could not be resolved.
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    constant_identifier_names: ignore

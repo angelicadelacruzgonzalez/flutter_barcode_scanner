@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'flutter_barcode_scanner_update'
-  s.version          = '2.1.6'
+  s.version          = '2.3.0'
   s.summary          = 'A new Flutter plugin supports barcode scanning on both Android and iOS.'
   s.description      = <<-DESC
 A new Flutter plugin supports barcode scanning on both Android and iOS.
@@ -10,10 +10,10 @@ A new Flutter plugin supports barcode scanning on both Android and iOS.
   s.author           = { 'Angelica de la Cruz Gonzalez' => 'angelicadelacruzgonzalez@gmail.com' }
   s.source           = { :path => '.' }
 
-  # Archivos fuente
+  # Archivos fuente. El icono de flash usa SF Symbols, por eso no se empaquetan
+  # recursos de imagen.
   s.source_files     = 'Classes/**/*.{swift,h,m}'
   s.public_header_files = 'Classes/**/*.h'
-  s.resources        = 'Assets/*.png'
 
   # Dependencias
   s.dependency       'Flutter'
