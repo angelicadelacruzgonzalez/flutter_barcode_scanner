@@ -1,61 +1,69 @@
 import AVFoundation
-import MLKitBarcodeScanning
-import MLKitVision
+import Vision
 import UIKit
 
-/// Full screen scanner backed by AVFoundation and ML Kit.
-///
-/// Honours every option exposed by the Dart API: `lineColor` and `scanMode`
-/// drive the overlay, `cancelButtonText` labels the dismiss button and
-/// `isShowFlashIcon` shows or hides the torch toggle.
 final class BarcodeScannerViewController: UIViewController {
 
-    /// Called for every detected code. In single scan mode it fires at most once.
     var onBarcodeDetected: ((BarcodePayload) -> Void)?
-    /// Called when the user dismisses the scanner.
     var onCancelled: (() -> Void)?
 
     private enum Metrics {
         static let bottomBarHeight: CGFloat = 72
         static let buttonSize: CGFloat = 44
         static let horizontalMargin: CGFloat = 16
-        /// The same code is ignored while this window is open, so a code held in
-        /// front of the camera is not emitted on every frame.
         static let duplicateWindow: TimeInterval = 1.5
     }
 
     private let configuration: ScannerConfiguration
 
     private let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "flutter_barcode_scanner_update.session")
-    private let videoQueue = DispatchQueue(label: "flutter_barcode_scanner_update.video")
+
+    private let sessionQueue = DispatchQueue(
+        label: "flutter_barcode_scanner_update.session",
+        qos: .userInitiated
+    )
+
+    private let videoQueue = DispatchQueue(
+        label: "flutter_barcode_scanner_update.video",
+        qos: .userInitiated
+    )
+
     private let videoOutput = AVCaptureVideoDataOutput()
-    private lazy var previewLayer = AVCaptureVideoPreviewLayer(session: session)
+
+    private lazy var previewLayer: AVCaptureVideoPreviewLayer = {
+        let layer = AVCaptureVideoPreviewLayer(session: session)
+        layer.videoGravity = .resizeAspectFill
+        return layer
+    }()
 
     private var captureDevice: AVCaptureDevice?
-    private lazy var barcodeScanner: BarcodeScanner = {
-        BarcodeScanner.barcodeScanner(
-            options: BarcodeScannerOptions(formats: configuration.formats)
-        )
-    }()
 
     private lazy var overlayView = ScannerOverlayView(
         scanMode: configuration.scanMode,
         lineColor: configuration.lineColor
     )
+
     private let bottomBar = UIView()
+
     private let flashButton = UIButton(type: .system)
+
     private let cancelButton = UIButton(type: .system)
 
     private var isProcessingFrame = false
     private var hasDeliveredResult = false
+
     private var isTorchOn = false
+
     private var lastBarcode: String?
     private var lastBarcodeAt: Date?
+
+    private var isSessionConfigured = false
 
     init(configuration: ScannerConfiguration) {
         self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
+
+        modalPresentationStyle = .fullScreen
     }
 
     @available(*, unavailable)
@@ -67,6 +75,7 @@ final class BarcodeScannerViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
         view.backgroundColor = .black
 
         setUpPreview()
@@ -80,251 +89,665 @@ final class BarcodeScannerViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+
         sessionQueue.async { [weak self] in
-            guard let self = self, !self.session.isRunning else { return }
+            guard let self else { return }
+
+            guard self.isSessionConfigured else {
+                return
+            }
+
+            guard !self.session.isRunning else {
+                return
+            }
+
             self.session.startRunning()
         }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+
         setTorch(on: false)
+
         sessionQueue.async { [weak self] in
-            guard let self = self, self.session.isRunning else { return }
+            guard let self else { return }
+
+            guard self.session.isRunning else {
+                return
+            }
+
             self.session.stopRunning()
         }
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+
         previewLayer.frame = view.bounds
+
         updateVideoOrientation()
     }
 
-    override var prefersStatusBarHidden: Bool { true }
+    override var prefersStatusBarHidden: Bool {
+        true
+    }
 
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .all }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        .all
+    }
 
     // MARK: - UI
 
     private func setUpPreview() {
-        previewLayer.videoGravity = .resizeAspectFill
         previewLayer.frame = view.bounds
-        view.layer.addSublayer(previewLayer)
+
+        view.layer.insertSublayer(
+            previewLayer,
+            at: 0
+        )
     }
 
     private func setUpOverlay() {
         overlayView.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(overlayView)
 
         NSLayoutConstraint.activate([
-            overlayView.topAnchor.constraint(equalTo: view.topAnchor),
-            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            overlayView.topAnchor.constraint(
+                equalTo: view.topAnchor
+            ),
+            overlayView.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor
+            ),
+            overlayView.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor
+            ),
+            overlayView.bottomAnchor.constraint(
+                equalTo: view.bottomAnchor
+            )
         ])
     }
 
     private func setUpBottomBar() {
-        bottomBar.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        bottomBar.backgroundColor =
+            UIColor.black.withAlphaComponent(0.72)
+
         bottomBar.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(bottomBar)
 
-        flashButton.setImage(UIImage(systemName: "bolt.slash.fill"), for: .normal)
+        flashButton.setImage(
+            UIImage(systemName: "bolt.slash.fill"),
+            for: .normal
+        )
+
         flashButton.tintColor = configuration.lineColor
-        flashButton.isHidden = !configuration.isShowFlashIcon
+
+        flashButton.isHidden =
+            !configuration.isShowFlashIcon
+
         flashButton.translatesAutoresizingMaskIntoConstraints = false
-        flashButton.addTarget(self, action: #selector(handleFlashTapped), for: .touchUpInside)
+
+        flashButton.addTarget(
+            self,
+            action: #selector(handleFlashTapped),
+            for: .touchUpInside
+        )
+
         bottomBar.addSubview(flashButton)
 
-        cancelButton.setTitle(configuration.cancelButtonText, for: .normal)
-        cancelButton.setTitleColor(.white, for: .normal)
-        cancelButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
+        cancelButton.setTitle(
+            configuration.cancelButtonText,
+            for: .normal
+        )
+
+        cancelButton.setTitleColor(
+            .white,
+            for: .normal
+        )
+
+        cancelButton.titleLabel?.font =
+            .systemFont(
+                ofSize: 17,
+                weight: .medium
+            )
+
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.addTarget(self, action: #selector(handleCancelTapped), for: .touchUpInside)
+
+        cancelButton.addTarget(
+            self,
+            action: #selector(handleCancelTapped),
+            for: .touchUpInside
+        )
+
         bottomBar.addSubview(cancelButton)
 
         NSLayoutConstraint.activate([
-            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBar.topAnchor.constraint(
-                equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-                constant: -Metrics.bottomBarHeight
+
+            bottomBar.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor
+            ),
+
+            bottomBar.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor
+            ),
+
+            bottomBar.bottomAnchor.constraint(
+                equalTo: view.bottomAnchor
+            ),
+
+            bottomBar.heightAnchor.constraint(
+                equalToConstant: Metrics.bottomBarHeight
             ),
 
             flashButton.leadingAnchor.constraint(
                 equalTo: bottomBar.leadingAnchor,
                 constant: Metrics.horizontalMargin
             ),
-            flashButton.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 8),
-            flashButton.widthAnchor.constraint(equalToConstant: Metrics.buttonSize),
-            flashButton.heightAnchor.constraint(equalToConstant: Metrics.buttonSize),
+
+            flashButton.centerYAnchor.constraint(
+                equalTo: bottomBar.centerYAnchor
+            ),
+
+            flashButton.widthAnchor.constraint(
+                equalToConstant: Metrics.buttonSize
+            ),
+
+            flashButton.heightAnchor.constraint(
+                equalToConstant: Metrics.buttonSize
+            ),
 
             cancelButton.trailingAnchor.constraint(
                 equalTo: bottomBar.trailingAnchor,
                 constant: -Metrics.horizontalMargin
             ),
-            cancelButton.centerYAnchor.constraint(equalTo: flashButton.centerYAnchor),
-            cancelButton.heightAnchor.constraint(equalToConstant: Metrics.buttonSize)
+
+            cancelButton.centerYAnchor.constraint(
+                equalTo: bottomBar.centerYAnchor
+            ),
+
+            cancelButton.heightAnchor.constraint(
+                equalToConstant: Metrics.buttonSize
+            )
         ])
     }
 
-    // MARK: - Session
+    // MARK: - AVCaptureSession
 
     private func configureSession() {
-        session.beginConfiguration()
-        session.sessionPreset = .high
 
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input) else {
+        guard !isSessionConfigured else {
+            return
+        }
+
+        session.beginConfiguration()
+
+        if session.canSetSessionPreset(.high) {
+            session.sessionPreset = .high
+        }
+
+        guard let device = AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: .back
+        ) else {
             session.commitConfiguration()
-            DispatchQueue.main.async { [weak self] in
-                self?.handleCancelTapped()
-            }
+
+            notifyScannerError()
+
             return
         }
 
         captureDevice = device
-        session.addInput(input)
 
-        videoOutput.alwaysDiscardsLateVideoFrames = true
-        videoOutput.videoSettings = [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
-        ]
-        videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
+        do {
 
-        if session.canAddOutput(videoOutput) {
-            session.addOutput(videoOutput)
+            let input = try AVCaptureDeviceInput(
+                device: device
+            )
+
+            guard session.canAddInput(input) else {
+                session.commitConfiguration()
+
+                notifyScannerError()
+
+                return
+            }
+
+            session.addInput(input)
+
+        } catch {
+            session.commitConfiguration()
+
+            notifyScannerError()
+
+            return
         }
 
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+
+        videoOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String:
+                kCVPixelFormatType_32BGRA
+        ]
+
+        videoOutput.setSampleBufferDelegate(
+            self,
+            queue: videoQueue
+        )
+
+        guard session.canAddOutput(videoOutput) else {
+            session.commitConfiguration()
+
+            notifyScannerError()
+
+            return
+        }
+
+        session.addOutput(videoOutput)
+
         session.commitConfiguration()
+
+        isSessionConfigured = true
 
         DispatchQueue.main.async { [weak self] in
             self?.updateVideoOrientation()
         }
-        session.startRunning()
+
+        if !session.isRunning {
+            session.startRunning()
+        }
     }
 
-    /// Keeps the preview and the delivered frames aligned with the interface,
-    /// which is what makes landscape scanning work.
+    private func notifyScannerError() {
+        DispatchQueue.main.async { [weak self] in
+            self?.onCancelled?()
+        }
+    }
+
+    // MARK: - Orientation
+
     private func updateVideoOrientation() {
-        guard let videoOrientation = currentVideoOrientation() else { return }
-        previewLayer.connection?.videoOrientation = videoOrientation
-        videoOutput.connection(with: .video)?.videoOrientation = videoOrientation
-    }
 
-    private func currentVideoOrientation() -> AVCaptureVideoOrientation? {
-        let interfaceOrientation: UIInterfaceOrientation?
-        if #available(iOS 13.0, *) {
-            interfaceOrientation = view.window?.windowScene?.interfaceOrientation
-        } else {
-            interfaceOrientation = UIApplication.shared.statusBarOrientation
+        guard let orientation = currentVideoOrientation() else {
+            return
         }
 
-        switch interfaceOrientation {
-        case .portrait: return .portrait
-        case .portraitUpsideDown: return .portraitUpsideDown
-        case .landscapeLeft: return .landscapeLeft
-        case .landscapeRight: return .landscapeRight
-        default: return nil
+        if let connection = previewLayer.connection,
+           connection.isVideoOrientationSupported {
+            connection.videoOrientation = orientation
+        }
+
+        if let connection = videoOutput.connection(
+            with: .video
+        ),
+           connection.isVideoOrientationSupported {
+            connection.videoOrientation = orientation
+        }
+    }
+
+    private func currentVideoOrientation()
+        -> AVCaptureVideoOrientation? {
+
+        let orientation: UIInterfaceOrientation?
+
+        if #available(iOS 13.0, *) {
+            orientation =
+                view.window?
+                    .windowScene?
+                    .interfaceOrientation
+        } else {
+            orientation =
+                UIApplication.shared.statusBarOrientation
+        }
+
+        switch orientation {
+        case .portrait:
+            return .portrait
+
+        case .portraitUpsideDown:
+            return .portraitUpsideDown
+
+        case .landscapeLeft:
+            return .landscapeLeft
+
+        case .landscapeRight:
+            return .landscapeRight
+
+        default:
+            return nil
         }
     }
 
     // MARK: - Actions
 
-    @objc private func handleCancelTapped() {
+    @objc
+    private func handleCancelTapped() {
+        stopCapture()
         onCancelled?()
     }
 
-    @objc private func handleFlashTapped() {
+    @objc
+    private func handleFlashTapped() {
         setTorch(on: !isTorchOn)
     }
 
+    // MARK: - Torch
+
     private func setTorch(on: Bool) {
-        guard let device = captureDevice, device.hasTorch, device.isTorchAvailable else {
-            flashButton.isEnabled = false
-            flashButton.alpha = 0.4
+
+        guard let device = captureDevice,
+              device.hasTorch,
+              device.isTorchAvailable else {
+
+            DispatchQueue.main.async { [weak self] in
+                self?.flashButton.isEnabled = false
+                self?.flashButton.alpha = 0.4
+            }
+
             return
         }
 
         do {
+
             try device.lockForConfiguration()
+
             device.torchMode = on ? .on : .off
+
             device.unlockForConfiguration()
+
             isTorchOn = on
-            flashButton.setImage(
-                UIImage(systemName: on ? "bolt.fill" : "bolt.slash.fill"),
-                for: .normal
-            )
+
+            DispatchQueue.main.async { [weak self] in
+
+                self?.flashButton.setImage(
+                    UIImage(
+                        systemName: on
+                            ? "bolt.fill"
+                            : "bolt.slash.fill"
+                    ),
+                    for: .normal
+                )
+            }
+
         } catch {
-            // Torch is best effort: keep scanning if it cannot be configured.
+            // Torch is optional.
         }
     }
 
-    // MARK: - Detection
+    // MARK: - Capture
 
-    private func handle(payload: BarcodePayload) {
+    private func stopCapture() {
+
+        if isTorchOn {
+            setTorch(on: false)
+        }
+
+        sessionQueue.async { [weak self] in
+
+            guard let self else {
+                return
+            }
+
+            guard self.session.isRunning else {
+                return
+            }
+
+            self.session.stopRunning()
+        }
+    }
+
+    // MARK: - Barcode
+
+    private func handle(
+        payload: BarcodePayload
+    ) {
+
         if configuration.isContinuousScan {
-            guard !isDuplicate(payload.rawValue) else { return }
+
+            guard !isDuplicate(
+                payload.rawValue
+            ) else {
+                return
+            }
+
             onBarcodeDetected?(payload)
+
         } else {
-            guard !hasDeliveredResult else { return }
+
+            guard !hasDeliveredResult else {
+                return
+            }
+
             hasDeliveredResult = true
+
+            stopCapture()
+
             onBarcodeDetected?(payload)
         }
     }
 
-    private func isDuplicate(_ value: String) -> Bool {
+    private func isDuplicate(
+        _ value: String
+    ) -> Bool {
+
         let now = Date()
+
         if value == lastBarcode,
            let previous = lastBarcodeAt,
-           now.timeIntervalSince(previous) < Metrics.duplicateWindow {
+           now.timeIntervalSince(previous)
+                < Metrics.duplicateWindow {
+
             return true
         }
+
         lastBarcode = value
         lastBarcodeAt = now
+
         return false
     }
 }
 
-// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
+// MARK: - Vision
 
-extension BarcodeScannerViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
+extension BarcodeScannerViewController:
+    AVCaptureVideoDataOutputSampleBufferDelegate {
 
     func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-        // Drop frames while a detection is in flight so the queue never backs up.
-        guard !isProcessingFrame, !hasDeliveredResult else { return }
+
+        guard !isProcessingFrame else {
+            return
+        }
+
+        guard !hasDeliveredResult else {
+            return
+        }
+
+        guard let pixelBuffer =
+            CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
+
         isProcessingFrame = true
 
-        let visionImage = VisionImage(buffer: sampleBuffer)
-        visionImage.orientation = imageOrientation()
+        let request = VNDetectBarcodesRequest {
+            [weak self] request, error in
 
-        barcodeScanner.process(visionImage) { [weak self] barcodes, error in
-            guard let self = self else { return }
-            defer { self.isProcessingFrame = false }
-
-            guard error == nil, let barcodes = barcodes, !barcodes.isEmpty else { return }
-
-            guard let payload = barcodes.lazy
-                .compactMap({ BarcodePayload(barcode: $0) })
-                .first else { return }
-
-            DispatchQueue.main.async {
-                self.handle(payload: payload)
+            guard let self else {
+                return
             }
+
+            defer {
+                self.isProcessingFrame = false
+            }
+
+            guard error == nil else {
+                return
+            }
+
+            guard let observations =
+                request.results as? [VNBarcodeObservation] else {
+                return
+            }
+
+            guard let observation =
+                observations.first(where: {
+                    guard let value = $0.payloadStringValue else {
+                        return false
+                    }
+
+                    return !value.isEmpty
+                }) else {
+                return
+            }
+
+            guard let payload =
+                self.makePayload(
+                    from: observation
+                ) else {
+                return
+            }
+
+            DispatchQueue.main.async { [weak self] in
+                self?.handle(payload: payload)
+            }
+        }
+
+        request.symbologies =
+            visionSymbologies()
+
+        let orientation =
+            cgImagePropertyOrientation()
+
+        let handler = VNImageRequestHandler(
+            cvPixelBuffer: pixelBuffer,
+            orientation: orientation,
+            options: [:]
+        )
+
+        do {
+            try handler.perform([request])
+        } catch {
+            isProcessingFrame = false
         }
     }
 
-    /// The connection already rotates the frames to match the interface, so the
-    /// buffer is upright and only the mirroring of the front camera matters.
-    private func imageOrientation() -> UIImage.Orientation {
-        let isFrontCamera = captureDevice?.position == .front
-        return isFrontCamera ? .leftMirrored : .up
+    // MARK: Vision Formats
+
+    private func visionSymbologies()
+        -> [VNBarcodeSymbology] {
+
+        var result: [VNBarcodeSymbology] = []
+
+        if #available(iOS 15.0, *) {
+
+            result = [
+                .aztec,
+                .codabar,
+                .code39,
+                .code39Checksum,
+                .code93,
+                .code93i,
+                .code128,
+                .dataMatrix,
+                .ean8,
+                .ean13,
+                .gs1DataBar,
+                .gs1DataBarExpanded,
+                .gs1DataBarLimited,
+                .itf14,
+                .microPDF417,
+                .microQR,
+                .pdf417,
+                .qr,
+                .upce
+            ]
+
+        } else {
+
+            result = [
+                .aztec,
+                .code39,
+                .code93,
+                .code128,
+                .dataMatrix,
+                .ean8,
+                .ean13,
+                .itf14,
+                .pdf417,
+                .qr,
+                .upce
+            ]
+        }
+
+        return result
+    }
+
+    // MARK: Payload
+
+private func makePayload(
+    from observation: VNBarcodeObservation
+) -> BarcodePayload? {
+    return BarcodePayload(
+        observation: observation
+    )
+}
+
+    // MARK: Orientation
+
+    private func cgImagePropertyOrientation()
+        -> CGImagePropertyOrientation {
+
+        let orientation =
+            currentVideoOrientation()
+
+        let isFrontCamera =
+            captureDevice?.position == .front
+
+        if isFrontCamera {
+
+            switch orientation {
+
+            case .portrait:
+                return .leftMirrored
+
+            case .portraitUpsideDown:
+                return .rightMirrored
+
+            case .landscapeLeft:
+                return .downMirrored
+
+            case .landscapeRight:
+                return .upMirrored
+
+            default:
+                return .leftMirrored
+            }
+
+        } else {
+
+            switch orientation {
+
+            case .portrait:
+                return .right
+
+            case .portraitUpsideDown:
+                return .left
+
+            case .landscapeLeft:
+                return .up
+
+            case .landscapeRight:
+                return .down
+
+            default:
+                return .right
+            }
+        }
     }
 }

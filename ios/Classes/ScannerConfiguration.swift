@@ -1,5 +1,5 @@
-import MLKitBarcodeScanning
 import UIKit
+import Vision
 
 /// Overlay graphics requested by the caller. The raw values match the index
 /// order of the Dart `ScanMode` enum.
@@ -26,7 +26,9 @@ struct ScannerConfiguration {
     let scanMode: ScanMode
 
     /// Symbologies to accept. Restricting the set speeds up detection and avoids
-    /// reading an unrelated code that happens to be in frame.
+    /// reading an unrelated code that happens to be in frame. `BarcodeFormat` is
+    /// our own ML Kit-compatible bitmask (see BarcodeFormat.swift), translated
+    /// to Vision's `VNBarcodeSymbology` at the call site.
     let formats: BarcodeFormat
 
     init(arguments: Any?, isContinuousScan: Bool) {
